@@ -1,15 +1,84 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl", "linux-musl-openssl-3.0.x", "debian-openssl-1.1.x"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  username  String
+  password  String?
+  googleId  String?   @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  sessions  Session[]
+  sets      Set[]
+}
+
+model Set {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  coverUrl    String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  ownerId     String
+  characters  Character[]
+  owner       User        @relation(fields: [ownerId], references: [id])
+}
+
+model Character {
+  id        String          @id @default(cuid())
+  name      String
+  imageUrl  String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  setId     String
+  set       Set             @relation(fields: [setId], references: [id])
+  choices   Choice[]
+  stats     CharacterStats?
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String?
+  choices   Choice[]
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+model Choice {
+  id          String     @id @default(cuid())
+  type        ChoiceType
+  createdAt   DateTime   @default(now())
+  sessionId   String
+  characterId String
+  character   Character  @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  session     Session    @relation(fields: [sessionId], references: [id])
+}
+
+model CharacterStats {
+  id          String    @id @default(cuid())
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  fuckCount  Int @default(0)
+  marryCount Int @default(0)
+  killCount  Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([characterId])
+}
+
+enum ChoiceType {
+  FUCK
+  MARRY
+  KILL
 }
