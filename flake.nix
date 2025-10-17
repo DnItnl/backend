@@ -14,6 +14,7 @@
         buildInputs = [
           pkgs.nodejs_24
           pkgs.prisma-engines
+          pkgs.openssl
         ];
 
         # Prisma env vars (важно!)
